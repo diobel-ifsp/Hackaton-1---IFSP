@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFSP PDFs - Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo-container">
+                <i class="fas fa-file-pdf"></i>
+                <h1>IFSP PDFs</h1>
+            </div>
+            <p class="subtitle">Sistema de Repositório Acadêmico</p>
+        </div>
+
+        <div class="login-card">
+            <div class="suap-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h2>Acesso ao Sistema</h2>
+            <p class="login-info">Utilize suas credenciais institucionais</p>
+            
+            <form id="loginForm" class="login-form">
+                <div class="input-group">
+                    <label for="prontuario">
+                        <i class="fas fa-id-card"></i> Prontuário
+                    </label>
+                    <input type="text" id="prontuario" placeholder="Ex: SP1234567" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="senha">
+                        <i class="fas fa-lock"></i> Senha
+                    </label>
+                    <input type="password" id="senha" placeholder="Sua senha" required>
+                </div>
+
+                <div class="login-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="lembrar">
+                        <span>Lembrar acesso</span>
+                    </label>
+                    <a href="#" class="forgot-password">Esqueceu a senha?</a>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </button>
+            </form>
+
+            <div id="loginStatus" class="status-message"></div>
+
+            <div class="login-footer">
+                <p>Instituto Federal de Educação, Ciência e Tecnologia de São Paulo - Campus Jacareí</p>
+                <p class="support-text">
+                    <i class="fas fa-headset"></i> Suporte Técnico: ctijcr@ifsp.edu.br
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFSP PDFs - Repositório de Documentos Acadêmicos</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="user-info" id="userInfo">
+                <i class="fas fa-user-circle"></i>
+                <span id="userName"></span>
+                <span class="user-prontuario" id="userProntuario"></span>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
+        </div>
+        <div class="logo-container">
+            <i class="fas fa-file-pdf"></i>
+            <h1>IFSP PDFs</h1>
+        </div>
+        <p class="subtitle">Repositório de Documentos Acadêmicos</p>
+    </header>
+
+    <main>
+        <!-- Seção de Upload com Metadados -->
+        <section class="upload-section">
+            <div class="upload-container">
+                <h2><i class="fas fa-cloud-upload-alt"></i> Submeter Documento Acadêmico</h2>
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <!-- Tipo de Documento -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tipoDocumento">
+                                <i class="fas fa-tag"></i> Tipo de Documento *
+                            </label>
+                            <select id="tipoDocumento" required>
+                                <option value="">Selecione o tipo...</option>
+                                <option value="tcc">TCC - Trabalho de Conclusão de Curso</option>
+                                <option value="dissertacao">Dissertação de Mestrado</option>
+                                <option value="tese">Tese de Doutorado</option>
+                                <option value="artigo">Artigo Científico</option>
+                                <option value="relatorio">Relatório Técnico</option>
+                                <option value="projeto">Projeto de Pesquisa</option>
+                                <option value="monografia">Monografia</option>
+                                <option value="resumo">Resumo Expandido</option>
+                                <option value="outro">Outro Documento Acadêmico</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="curso">
+                                <i class="fas fa-book"></i> Curso
+                            </label>
+                            <select id="curso">
+                                <option value="">Selecione o curso...</option>
+                                <option value="ads">Análise e Desenvolvimento de Sistemas</option>
+                                <option value="engenharia">Engenharia</option>
+                                <option value="licenciatura">Licenciatura</option>
+                                <option value="tecnologia">Tecnologia em Gestão</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Título e Autores -->
+                    <div class="form-group">
+                        <label for="titulo">
+                            <i class="fas fa-heading"></i> Título do Trabalho *
+                        </label>
+                        <input type="text" id="titulo" placeholder="Digite o título completo" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="autores">
+                            <i class="fas fa-users"></i> Autores/Colaboradores *
+                        </label>
+                        <input type="text" id="autores" placeholder="Nome dos autores separados por vírgula" required>
+                        <small>Ex: João Silva, Maria Santos, Pedro Oliveira</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="orientador">
+                                <i class="fas fa-chalkboard-teacher"></i> Orientador
+                            </label>
+                            <input type="text" id="orientador" placeholder="Nome do orientador">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ano">
+                                <i class="fas fa-calendar-alt"></i> Ano *
+                            </label>
+                            <input type="number" id="ano" min="2000" max="2030" placeholder="2024" required>
+                        </div>
+                    </div>
+
+                    <!-- Palavras-chave -->
+                    <div class="form-group">
+                        <label for="palavrasChave">
+                            <i class="fas fa-key"></i> Palavras-chave
+                        </label>
+                        <input type="text" id="palavrasChave" placeholder="Separadas por vírgula">
+                    </div>
+
+                    <!-- Upload do Arquivo -->
+                    <div class="file-input-wrapper">
+                        <input type="file" id="pdfFile" accept=".pdf" required>
+                        <label for="pdfFile" class="file-label">
+                            <i class="fas fa-folder-open"></i>
+                            <span>Escolher arquivo PDF *</span>
+                        </label>
+                        <p id="fileName" class="file-name">Nenhum arquivo selecionado</p>
+                    </div>
+
+                    <button type="submit" class="upload-btn">
+                        <i class="fas fa-upload"></i> Submeter Documento
+                    </button>
+                </form>
+                <div id="uploadStatus" class="status-message"></div>
+            </div>
+        </section>
+
+        <!-- Sistema de Busca Avançada -->
+        <section class="search-section">
+            <div class="advanced-search">
+                <h2><i class="fas fa-search"></i> Busca Avançada</h2>
+                <div class="search-filters">
+                    <div class="search-row">
+                        <div class="search-group">
+                            <input type="text" id="searchInput" placeholder="Buscar por título, autores ou palavras-chave...">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+                        
+                        <select id="filterType" class="filter-select">
+                            <option value="">Todos os tipos</option>
+                            <option value="tcc">TCC</option>
+                            <option value="dissertacao">Dissertação</option>
+                            <option value="tese">Tese</option>
+                            <option value="artigo">Artigo</option>
+                            <option value="relatorio">Relatório</option>
+                            <option value="projeto">Projeto</option>
+                            <option value="monografia">Monografia</option>
+                        </select>
+
+                        <select id="filterYear" class="filter-select">
+                            <option value="">Todos os anos</option>
+                        </select>
+
+                        <select id="filterCourse" class="filter-select">
+                            <option value="">Todos os cursos</option>
+                            <option value="ads">ADS</option>
+                            <option value="engenharia">Engenharia</option>
+                            <option value="licenciatura">Licenciatura</option>
+                            <option value="tecnologia">Tecnologia</option>
+                        </select>
+                    </div>
+
+                    <div class="search-stats" id="searchStats">
+                        <span id="totalDocs">0</span> documentos encontrados
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lista de Documentos -->
+        <section class="pdfs-section">
+            <div class="pdfs-header">
+                <h2><i class="fas fa-folder-open"></i> Documentos do Repositório</h2>
+                <div class="view-options">
+                    <button class="view-btn active" onclick="changeView('grid')">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button class="view-btn" onclick="changeView('list')">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="pdfsList" class="pdfs-grid">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Carregando documentos...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de Detalhes do Documento -->
+    <div id="documentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <span class="document-type-badge" id="modalType"></span>
+                <h2 id="modalTitle"></h2>
+            </div>
+            <div class="modal-body">
+                <div class="modal-info">
+                    <p><i class="fas fa-users"></i> <strong>Autores:</strong> <span id="modalAuthors"></span></p>
+                    <p><i class="fas fa-chalkboard-teacher"></i> <strong>Orientador:</strong> <span id="modalAdvisor"></span></p>
+                    <p><i class="fas fa-calendar"></i> <strong>Ano:</strong> <span id="modalYear"></span></p>
+                    <p><i class="fas fa-book"></i> <strong>Curso:</strong> <span id="modalCourse"></span></p>
+                    <p><i class="fas fa-key"></i> <strong>Palavras-chave:</strong> <span id="modalKeywords"></span></p>
+                    <p><i class="fas fa-user"></i> <strong>Enviado por:</strong> <span id="modalUploader"></span></p>
+                    <p><i class="fas fa-clock"></i> <strong>Data de envio:</strong> <span id="modalDate"></span></p>
+                </div>
+                <div class="modal-actions">
+                    <button class="download-btn" id="modalDownload">
+                        <i class="fas fa-download"></i> Baixar PDF
+                    </button>
+                    <button class="delete-btn" id="modalDelete" style="display:none;">
+                        <i class="fas fa-trash"></i> Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 IFSP PDFs - Instituto Federal de São Paulo</p>
+        <div class="footer-links">
+            <a href="#"><i class="fas fa-info-circle"></i> Sobre</a>
+            <a href="#"><i class="fas fa-envelope"></i> Contato</a>
+            <a href="#"><i class="fas fa-shield-alt"></i> Privacidade</a>
+        </div>
+    </footer>
+
+    <div id="notification" class="notification"></div>
+    
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
