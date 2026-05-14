@@ -8,6 +8,7 @@ class PDFManager {
             year: '',
             course: ''
         };
+        this.currentSort = 'date';
     }
 
     loadPDFs() {
@@ -39,7 +40,6 @@ class PDFManager {
         if (index !== -1) {
             const pdf = this.pdfs[index];
             
-            // Verificar permissão
             if (!auth.canDelete(pdf.uploadedBy)) {
                 return { success: false, message: 'Sem permissão para excluir este documento' };
             }
@@ -57,15 +57,35 @@ class PDFManager {
             const matchSearch = !filters.search || 
                 pdf.titulo.toLowerCase().includes(searchLower) ||
                 pdf.autores.toLowerCase().includes(searchLower) ||
-                pdf.palavrasChave.toLowerCase().includes(searchLower) ||
-                pdf.orientador.toLowerCase().includes(searchLower);
+                (pdf.palavrasChave && pdf.palavrasChave.toLowerCase().includes(searchLower)) ||
+                (pdf.orientador && pdf.orientador.toLowerCase().includes(searchLower));
             
             const matchType = !filters.type || pdf.tipoDocumento === filters.type;
-            const matchYear = !filters.year || pdf.ano === filters.year;
+            const matchYear = !filters.year || pdf.ano == filters.year;
             const matchCourse = !filters.course || pdf.curso === filters.course;
             
             return matchSearch && matchType && matchYear && matchCourse;
         });
+    }
+
+    sortDocuments(docs) {
+        const sorted = [...docs];
+        switch(this.currentSort) {
+            case 'title':
+                sorted.sort((a, b) => a.titulo.localeCompare(b.titulo));
+                break;
+            case 'downloads':
+                sorted.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
+                break;
+            case 'year':
+                sorted.sort((a, b) => b.ano - a.ano);
+                break;
+            case 'date':
+            default:
+                sorted.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+                break;
+        }
+        return sorted;
     }
 
     getDocumentById(id) {
@@ -118,30 +138,60 @@ class PDFManager {
 
 // Instância global
 const pdfManager = new PDFManager();
+let currentDocumentId = null;
 
-// Inicialização
+// ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', () => {
-    // Verificar autenticação
     if (!checkAuth()) return;
     
-    // Atualizar informações do usuário
     updateUserInfo();
-    
-    // Inicializar componentes
     initializeUpload();
     initializeSearch();
+    initializeSorting();
+    initializeDragAndDrop();
     updateYearFilter();
     renderPDFs();
     updateStatistics();
-    
-    // Verificar parâmetros de URL (para abertura direta de documento)
     checkURLParams();
+    
+    // Botão de limpar filtros
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+            const searchInput = document.getElementById('searchInput');
+            const filterType = document.getElementById('filterType');
+            const filterYear = document.getElementById('filterYear');
+            const filterCourse = document.getElementById('filterCourse');
+            
+            if (searchInput) searchInput.value = '';
+            if (filterType) filterType.value = '';
+            if (filterYear) filterYear.value = '';
+            if (filterCourse) filterCourse.value = '';
+            
+            pdfManager.currentFilter = {
+                search: '',
+                type: '',
+                year: '',
+                course: ''
+            };
+            renderPDFs();
+            showNotification('Filtros limpos!', 'success');
+        });
+    }
+    
+    // Botão de exportar CSV
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', exportToCSV);
+    }
 });
 
 // Atualizar informações do usuário
 function updateUserInfo() {
-    document.getElementById('userName').textContent = auth.getUserFullName();
-    document.getElementById('userProntuario').textContent = auth.getUserProntuario();
+    const userName = document.getElementById('userName');
+    const userProntuario = document.getElementById('userProntuario');
+    if (userName) userName.textContent = auth.getUserFullName();
+    if (userProntuario) userProntuario.textContent = auth.getUserProntuario();
 }
 
 // Inicializar upload
@@ -150,23 +200,29 @@ function initializeUpload() {
     const pdfFileInput = document.getElementById('pdfFile');
     const fileNameDisplay = document.getElementById('fileName');
     
-    pdfFileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            fileNameDisplay.textContent = file.name;
-            fileNameDisplay.style.color = '#006437';
-        }
-    });
+    if (pdfFileInput) {
+        pdfFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileNameDisplay.textContent = file.name;
+                fileNameDisplay.style.color = '#006437';
+            }
+        });
+    }
     
-    uploadForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await handleUpload();
-    });
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleUpload();
+        });
+    }
 }
 
 // Manipular upload
 async function handleUpload() {
-    const file = document.getElementById('pdfFile').files[0];
+    const fileInput = document.getElementById('pdfFile');
+    const file = fileInput ? fileInput.files[0] : null;
+    
     if (!file) {
         showNotification('Selecione um arquivo PDF', 'error');
         return;
@@ -178,8 +234,13 @@ async function handleUpload() {
     }
     
     const submitBtn = document.querySelector('.upload-btn');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        const btnText = submitBtn.querySelector('.btn-text');
+        const loader = submitBtn.querySelector('.loader');
+        if (btnText) btnText.style.display = 'none';
+        if (loader) loader.style.display = 'inline-block';
+    }
     
     const reader = new FileReader();
     
@@ -190,7 +251,7 @@ async function handleUpload() {
             titulo: document.getElementById('titulo').value,
             autores: document.getElementById('autores').value,
             orientador: document.getElementById('orientador').value,
-            ano: document.getElementById('ano').value,
+            ano: parseInt(document.getElementById('ano').value),
             palavrasChave: document.getElementById('palavrasChave').value,
             fileName: file.name,
             fileSize: file.size,
@@ -199,11 +260,11 @@ async function handleUpload() {
         
         pdfManager.addPDF(pdfData);
         
-        // Limpar formulário
-        uploadForm.reset();
-        document.getElementById('fileName').textContent = 'Nenhum arquivo selecionado';
+        const uploadForm = document.getElementById('uploadForm');
+        if (uploadForm) uploadForm.reset();
+        const fileNameDisplay = document.getElementById('fileName');
+        if (fileNameDisplay) fileNameDisplay.textContent = 'Nenhum arquivo selecionado';
         
-        // Atualizar interface
         updateYearFilter();
         renderPDFs();
         updateStatistics();
@@ -213,8 +274,13 @@ async function handleUpload() {
     
     reader.readAsDataURL(file);
     
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '<i class="fas fa-upload"></i> Submeter Documento';
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        const btnText = submitBtn.querySelector('.btn-text');
+        const loader = submitBtn.querySelector('.loader');
+        if (btnText) btnText.style.display = 'inline-block';
+        if (loader) loader.style.display = 'none';
+    }
 }
 
 // Inicializar busca
@@ -226,21 +292,69 @@ function initializeSearch() {
     
     const applyFilters = () => {
         pdfManager.currentFilter = {
-            search: searchInput.value,
-            type: filterType.value,
-            year: filterYear.value,
-            course: filterCourse.value
+            search: searchInput ? searchInput.value : '',
+            type: filterType ? filterType.value : '',
+            year: filterYear ? filterYear.value : '',
+            course: filterCourse ? filterCourse.value : ''
         };
         renderPDFs();
     };
     
-    searchInput.addEventListener('input', debounce(applyFilters, 300));
-    filterType.addEventListener('change', applyFilters);
-    filterYear.addEventListener('change', applyFilters);
-    filterCourse.addEventListener('change', applyFilters);
+    if (searchInput) searchInput.addEventListener('input', debounce(applyFilters, 300));
+    if (filterType) filterType.addEventListener('change', applyFilters);
+    if (filterYear) filterYear.addEventListener('change', applyFilters);
+    if (filterCourse) filterCourse.addEventListener('change', applyFilters);
 }
 
-// Debounce para busca
+// Inicializar ordenação
+function initializeSorting() {
+    const sortSelect = document.getElementById('sortBy');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', (e) => {
+            pdfManager.currentSort = e.target.value;
+            renderPDFs();
+        });
+    }
+}
+
+// Inicializar Drag & Drop
+function initializeDragAndDrop() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('pdfFile');
+    const fileNameDisplay = document.getElementById('fileName');
+    
+    if (!dropZone) return;
+    
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        
+        const file = e.dataTransfer.files[0];
+        if (file && file.type === 'application/pdf') {
+            if (fileInput) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                fileNameDisplay.textContent = file.name;
+                fileNameDisplay.style.color = '#006437';
+                showNotification('PDF adicionado!', 'success');
+            }
+        } else {
+            showNotification('Arraste apenas arquivos PDF!', 'error');
+        }
+    });
+}
+
+// Debounce
 function debounce(func, wait) {
     let timeout;
     return function(...args) {
@@ -252,22 +366,74 @@ function debounce(func, wait) {
 // Atualizar filtro de anos
 function updateYearFilter() {
     const filterYear = document.getElementById('filterYear');
+    if (!filterYear) return;
+    
     const years = pdfManager.getYears();
+    const currentValue = filterYear.value;
     
     filterYear.innerHTML = '<option value="">Todos os anos</option>' +
         years.map(year => `<option value="${year}">${year}</option>`).join('');
+    
+    if (currentValue && years.includes(parseInt(currentValue))) {
+        filterYear.value = currentValue;
+    }
 }
 
 // Atualizar estatísticas
 function updateStatistics() {
-    const stats = pdfManager.getStatistics();
-    document.getElementById('totalDocs').textContent = stats.total;
+    const totalDocs = document.getElementById('totalDocs');
+    if (totalDocs) {
+        const stats = pdfManager.getStatistics();
+        totalDocs.textContent = stats.total;
+    }
+}
+
+// Exportar para CSV
+function exportToCSV() {
+    const filtered = pdfManager.searchPDFs(pdfManager.currentFilter);
+    const sorted = pdfManager.sortDocuments(filtered);
+    
+    let csv = "ID,Título,Autores,Orientador,Ano,Curso,Tipo,Palavras-chave,Downloads,Data Envio\n";
+    
+    sorted.forEach(pdf => {
+        const row = [
+            pdf.id,
+            `"${pdf.titulo.replace(/"/g, '""')}"`,
+            `"${pdf.autores.replace(/"/g, '""')}"`,
+            `"${(pdf.orientador || '').replace(/"/g, '""')}"`,
+            pdf.ano,
+            `"${pdf.curso || ''}"`,
+            `"${pdf.tipoDocumento || ''}"`,
+            `"${(pdf.palavrasChave || '').replace(/"/g, '""')}"`,
+            pdf.downloads || 0,
+            new Date(pdf.uploadedAt).toLocaleDateString('pt-BR')
+        ];
+        csv += row.join(',') + "\n";
+    });
+    
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', `ifsp_pdfs_${new Date().toISOString().slice(0,19)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showNotification(`Exportados ${sorted.length} documentos!`, 'success');
 }
 
 // Renderizar PDFs
 function renderPDFs(pdfsToRender = null) {
-    const pdfs = pdfsToRender || pdfManager.searchPDFs(pdfManager.currentFilter);
+    let pdfs = pdfsToRender || pdfManager.searchPDFs(pdfManager.currentFilter);
+    pdfs = pdfManager.sortDocuments(pdfs);
+    
     const pdfsList = document.getElementById('pdfsList');
+    if (!pdfsList) return;
+    
+    const resultsCount = document.getElementById('resultsCount');
+    if (resultsCount) resultsCount.textContent = pdfs.length;
     
     if (pdfs.length === 0) {
         pdfsList.innerHTML = `
@@ -278,11 +444,8 @@ function renderPDFs(pdfsToRender = null) {
         return;
     }
     
-    const viewMode = document.querySelector('.view-btn.active')?.dataset?.view || 'grid';
-    
     pdfsList.innerHTML = pdfs.map(pdf => `
-        <div class="pdf-card ${viewMode === 'list' ? 'list-view' : ''}" 
-             onclick="showDocumentDetails(${pdf.id})">
+        <div class="pdf-card" onclick="showDocumentDetails(${pdf.id})">
             <div class="document-type-badge type-${pdf.tipoDocumento}">
                 <i class="fas ${getTypeIcon(pdf.tipoDocumento)}"></i>
                 ${getTypeName(pdf.tipoDocumento)}
@@ -291,7 +454,7 @@ function renderPDFs(pdfsToRender = null) {
                 <i class="fas fa-file-pdf"></i>
             </div>
             <div class="pdf-info">
-                <h3 title="${pdf.titulo}">${pdf.titulo}</h3>
+                <h3 title="${pdf.titulo.replace(/"/g, '&quot;')}">${pdf.titulo}</h3>
                 <p class="authors">
                     <i class="fas fa-users"></i> ${pdf.autores}
                 </p>
@@ -319,7 +482,6 @@ function renderPDFs(pdfsToRender = null) {
     `).join('');
 }
 
-// Funções auxiliares
 function getTypeIcon(type) {
     const icons = {
         'tcc': 'fa-graduation-cap',
@@ -348,7 +510,6 @@ function getTypeName(type) {
     return names[type] || 'Documento';
 }
 
-// Download de documento
 function downloadDocument(id) {
     const pdf = pdfManager.getDocumentById(id);
     if (!pdf) return;
@@ -366,7 +527,6 @@ function downloadDocument(id) {
     showNotification(`Baixando: ${pdf.titulo}`, 'success');
 }
 
-// Deletar documento
 function deleteDocument(id) {
     const pdf = pdfManager.getDocumentById(id);
     if (!pdf) return;
@@ -385,46 +545,72 @@ function deleteDocument(id) {
     }
 }
 
-// Mostrar detalhes do documento
 function showDocumentDetails(id) {
     const pdf = pdfManager.getDocumentById(id);
     if (!pdf) return;
     
+    currentDocumentId = id;
     const modal = document.getElementById('documentModal');
+    if (!modal) return;
     
-    document.getElementById('modalType').textContent = getTypeName(pdf.tipoDocumento);
-    document.getElementById('modalType').className = `document-type-badge type-${pdf.tipoDocumento}`;
-    document.getElementById('modalTitle').textContent = pdf.titulo;
-    document.getElementById('modalAuthors').textContent = pdf.autores;
-    document.getElementById('modalAdvisor').textContent = pdf.orientador || 'Não informado';
-    document.getElementById('modalYear').textContent = pdf.ano;
-    document.getElementById('modalCourse').textContent = pdf.curso || 'Não informado';
-    document.getElementById('modalKeywords').textContent = pdf.palavrasChave || 'Não informadas';
-    document.getElementById('modalUploader').textContent = pdf.uploaderName || 'Desconhecido';
-    document.getElementById('modalDate').textContent = new Date(pdf.uploadedAt).toLocaleDateString('pt-BR');
+    const modalType = document.getElementById('modalType');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalAuthors = document.getElementById('modalAuthors');
+    const modalAdvisor = document.getElementById('modalAdvisor');
+    const modalYear = document.getElementById('modalYear');
+    const modalCourse = document.getElementById('modalCourse');
+    const modalKeywords = document.getElementById('modalKeywords');
+    const modalUploader = document.getElementById('modalUploader');
+    const modalDate = document.getElementById('modalDate');
+    const modalDownload = document.getElementById('modalDownload');
+    const modalDelete = document.getElementById('modalDelete');
+    const modalShare = document.getElementById('modalShare');
     
-    document.getElementById('modalDownload').onclick = () => downloadDocument(id);
-    
-    const deleteBtn = document.getElementById('modalDelete');
-    if (auth.canDelete(pdf.uploadedBy)) {
-        deleteBtn.style.display = 'inline-flex';
-        deleteBtn.onclick = () => {
-            closeModal();
-            deleteDocument(id);
-        };
-    } else {
-        deleteBtn.style.display = 'none';
+    if (modalType) {
+        modalType.textContent = getTypeName(pdf.tipoDocumento);
+        modalType.className = `document-type-badge type-${pdf.tipoDocumento}`;
     }
+    if (modalTitle) modalTitle.textContent = pdf.titulo;
+    if (modalAuthors) modalAuthors.textContent = pdf.autores;
+    if (modalAdvisor) modalAdvisor.textContent = pdf.orientador || 'Não informado';
+    if (modalYear) modalYear.textContent = pdf.ano;
+    if (modalCourse) modalCourse.textContent = pdf.curso || 'Não informado';
+    if (modalKeywords) modalKeywords.textContent = pdf.palavrasChave || 'Não informadas';
+    if (modalUploader) modalUploader.textContent = pdf.uploaderName || 'Desconhecido';
+    if (modalDate) modalDate.textContent = new Date(pdf.uploadedAt).toLocaleDateString('pt-BR');
+    
+    if (modalDownload) modalDownload.onclick = () => downloadDocument(id);
+    
+    if (modalDelete) {
+        if (auth.canDelete(pdf.uploadedBy)) {
+            modalDelete.style.display = 'inline-flex';
+            modalDelete.onclick = () => {
+                closeModal();
+                deleteDocument(id);
+            };
+        } else {
+            modalDelete.style.display = 'none';
+        }
+    }
+    
+    if (modalShare) modalShare.style.display = 'inline-flex';
     
     modal.style.display = 'block';
 }
 
-// Fechar modal
-function closeModal() {
-    document.getElementById('documentModal').style.display = 'none';
+function shareCurrentDocument() {
+    if (!currentDocumentId) return;
+    const url = `${window.location.origin}${window.location.pathname}?doc=${currentDocumentId}`;
+    navigator.clipboard.writeText(url);
+    showNotification('Link copiado! Compartilhe o documento.', 'success');
 }
 
-// Mudar visualização
+function closeModal() {
+    const modal = document.getElementById('documentModal');
+    if (modal) modal.style.display = 'none';
+    currentDocumentId = null;
+}
+
 function changeView(mode) {
     document.querySelectorAll('.view-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -432,7 +618,7 @@ function changeView(mode) {
     });
     
     const activeBtn = document.querySelector(`.view-btn .fa-${mode === 'grid' ? 'th-large' : 'list'}`);
-    if (activeBtn) {
+    if (activeBtn && activeBtn.parentElement) {
         activeBtn.parentElement.classList.add('active');
         activeBtn.parentElement.dataset.view = mode;
     }
@@ -440,18 +626,20 @@ function changeView(mode) {
     renderPDFs();
 }
 
-// Verificar parâmetros de URL
 function checkURLParams() {
     const params = new URLSearchParams(window.location.search);
     const docId = params.get('doc');
     if (docId) {
-        showDocumentDetails(parseInt(docId));
+        setTimeout(() => {
+            showDocumentDetails(parseInt(docId));
+        }, 500);
     }
 }
 
-// Notificações
 function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
+    if (!notification) return;
+    
     notification.textContent = message;
     notification.className = `notification show ${type}`;
     
@@ -460,7 +648,6 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
-// Fechar modal ao clicar fora
 window.onclick = (event) => {
     const modal = document.getElementById('documentModal');
     if (event.target === modal) {
