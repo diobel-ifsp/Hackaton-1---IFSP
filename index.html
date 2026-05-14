@@ -27,17 +27,14 @@
     </header>
 
     <main>
-        <!-- Seção de Upload com Metadados -->
+        <!-- Seção de Upload -->
         <section class="upload-section">
             <div class="upload-container">
                 <h2><i class="fas fa-cloud-upload-alt"></i> Submeter Documento Acadêmico</h2>
-                <form id="uploadForm" enctype="multipart/form-data">
-                    <!-- Tipo de Documento -->
+                <form id="uploadForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="tipoDocumento">
-                                <i class="fas fa-tag"></i> Tipo de Documento *
-                            </label>
+                            <label for="tipoDocumento"><i class="fas fa-tag"></i> Tipo de Documento *</label>
                             <select id="tipoDocumento" required>
                                 <option value="">Selecione o tipo...</option>
                                 <option value="tcc">TCC - Trabalho de Conclusão de Curso</option>
@@ -53,91 +50,82 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="curso">
-                                <i class="fas fa-book"></i> Curso
-                            </label>
-                            <select id="curso">
+                            <label for="curso"><i class="fas fa-book"></i> Curso *</label>
+                            <select id="curso" required>
                                 <option value="">Selecione o curso...</option>
                                 <option value="ads">Análise e Desenvolvimento de Sistemas</option>
-                                <option value="engenharia">Engenharia</option>
-                                <option value="licenciatura">Licenciatura</option>
-                                <option value="tecnologia">Tecnologia em Gestão</option>
+                                <option value="cc">Ciência da Computação</option>
+                                <option value="pedagogia">Pedagogia</option>
+                                <option value="ddi">Design de Interiores</option>
+                                <option value="aeu">Arquitetura e Urbanismo</option>
+                                <option value="administracao">Administração</option>
                                 <option value="outro">Outro</option>
                             </select>
                         </div>
                     </div>
 
-                    <!-- Título e Autores -->
                     <div class="form-group">
-                        <label for="titulo">
-                            <i class="fas fa-heading"></i> Título do Trabalho *
-                        </label>
+                        <label for="titulo"><i class="fas fa-heading"></i> Título do Trabalho *</label>
                         <input type="text" id="titulo" placeholder="Digite o título completo" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="autores">
-                            <i class="fas fa-users"></i> Autores/Colaboradores *
-                        </label>
+                        <label for="autores"><i class="fas fa-users"></i> Autores/Colaboradores *</label>
                         <input type="text" id="autores" placeholder="Nome dos autores separados por vírgula" required>
-                        <small>Ex: João Silva, Maria Santos, Pedro Oliveira</small>
+                        <small>Ex: João Silva, Maria Santos</small>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="orientador">
-                                <i class="fas fa-chalkboard-teacher"></i> Orientador
-                            </label>
+                            <label for="orientador"><i class="fas fa-chalkboard-teacher"></i> Orientador</label>
                             <input type="text" id="orientador" placeholder="Nome do orientador">
                         </div>
 
                         <div class="form-group">
-                            <label for="ano">
-                                <i class="fas fa-calendar-alt"></i> Ano *
-                            </label>
-                            <input type="number" id="ano" min="2000" max="2030" placeholder="2024" required>
+                            <label for="ano"><i class="fas fa-calendar-alt"></i> Ano *</label>
+                            <input type="number" id="ano" min="2000" max="2030" value="2024" required>
                         </div>
                     </div>
 
-                    <!-- Palavras-chave -->
                     <div class="form-group">
-                        <label for="palavrasChave">
-                            <i class="fas fa-key"></i> Palavras-chave
-                        </label>
-                        <input type="text" id="palavrasChave" placeholder="Separadas por vírgula">
+                        <label for="palavrasChave"><i class="fas fa-key"></i> Palavras-chave</label>
+                        <input type="text" id="palavrasChave" placeholder="Ex: IA, Educação, Python">
                     </div>
 
-                    <!-- Upload do Arquivo -->
-                    <div class="file-input-wrapper">
-                        <input type="file" id="pdfFile" accept=".pdf" required>
+                    <div class="file-input-wrapper" id="dropZone">
+                        <input type="file" id="pdfFile" accept=".pdf" required style="display: none;">
                         <label for="pdfFile" class="file-label">
                             <i class="fas fa-folder-open"></i>
                             <span>Escolher arquivo PDF *</span>
                         </label>
                         <p id="fileName" class="file-name">Nenhum arquivo selecionado</p>
+                        <div class="drag-drop-hint"><i class="fas fa-mouse-pointer"></i> Ou arraste e solte o PDF aqui</div>
                     </div>
 
-                    <button type="submit" class="upload-btn">
-                        <i class="fas fa-upload"></i> Submeter Documento
+                    <button type="submit" class="upload-btn" id="btnSubmit">
+                        <span class="btn-text"><i class="fas fa-upload"></i> Submeter Documento</span>
+                        <span class="loader" style="display: none;"><i class="fas fa-spinner fa-spin"></i> Processando...</span>
                     </button>
                 </form>
                 <div id="uploadStatus" class="status-message"></div>
             </div>
         </section>
 
-        <!-- Sistema de Busca Avançada -->
-        <section class="search-section">
-            <div class="advanced-search">
-                <h2><i class="fas fa-search"></i> Busca Avançada</h2>
-                <div class="search-filters">
-                    <div class="search-row">
-                        <div class="search-group">
-                            <input type="text" id="searchInput" placeholder="Buscar por título, autores ou palavras-chave...">
-                            <i class="fas fa-search search-icon"></i>
-                        </div>
-                        
-                        <select id="filterType" class="filter-select">
-                            <option value="">Todos os tipos</option>
+        <!-- Seção de Filtros -->
+        <section class="filters-section">
+            <div class="filters-container">
+                <h3><i class="fas fa-filter"></i> Filtrar Documentos</h3>
+                
+                <div class="filters-row">
+                    <div class="filter-group search-group">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar por título, autor, orientador ou palavra-chave...">
+                    </div>
+
+                    <div class="filter-group">
+                        <label><i class="fas fa-tag"></i> Tipo</label>
+                        <select id="filterType">
+                            <option value="">Todos</option>
                             <option value="tcc">TCC</option>
                             <option value="dissertacao">Dissertação</option>
                             <option value="tese">Tese</option>
@@ -145,42 +133,57 @@
                             <option value="relatorio">Relatório</option>
                             <option value="projeto">Projeto</option>
                             <option value="monografia">Monografia</option>
-                        </select>
-
-                        <select id="filterYear" class="filter-select">
-                            <option value="">Todos os anos</option>
-                        </select>
-
-                        <select id="filterCourse" class="filter-select">
-                            <option value="">Todos os cursos</option>
-                            <option value="ads">ADS</option>
-                            <option value="engenharia">Engenharia</option>
-                            <option value="licenciatura">Licenciatura</option>
-                            <option value="tecnologia">Tecnologia</option>
+                            <option value="resumo">Resumo</option>
                         </select>
                     </div>
 
-                    <div class="search-stats" id="searchStats">
-                        <span id="totalDocs">0</span> documentos encontrados
+                    <div class="filter-group">
+                        <label><i class="fas fa-book"></i> Curso</label>
+                        <select id="filterCourse">
+                            <option value="">Todos</option>
+                            <option value="ads">Análise e Desenvolvimento de Sistemas</option>
+                            <option value="cc">Ciência da Computação</option>
+                            <option value="pedagogia">Pedagogia</option>
+                            <option value="ddi">Design de Interiores</option>
+                            <option value="aeu">Arquitetura e Urbanismo</option>
+                            <option value="administracao">Administração</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label><i class="fas fa-calendar"></i> Ano</label>
+                        <select id="filterYear">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+
+                    <button id="clearFiltersBtn" class="clear-filters-btn">
+                        <i class="fas fa-times"></i> Limpar
+                    </button>
+                </div>
+
+                <div class="filter-stats">
+                    <div class="stats-left">
+                        Mostrando <span id="resultsCount">0</span> documento(s)
+                    </div>
+                    <div class="stats-right">
+                        <label>Ordenar por:</label>
+                        <select id="sortBy">
+                            <option value="date">📅 Mais recente</option>
+                            <option value="title">🔤 Título (A-Z)</option>
+                            <option value="downloads">📥 Mais baixados</option>
+                            <option value="year">📆 Ano (decrescente)</option>
+                        </select>
+                        <button id="exportBtn" class="export-btn" title="Exportar para CSV">
+                            <i class="fas fa-download"></i> CSV
+                        </button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Lista de Documentos -->
+        <!-- Lista de PDFs -->
         <section class="pdfs-section">
-            <div class="pdfs-header">
-                <h2><i class="fas fa-folder-open"></i> Documentos do Repositório</h2>
-                <div class="view-options">
-                    <button class="view-btn active" onclick="changeView('grid')">
-                        <i class="fas fa-th-large"></i>
-                    </button>
-                    <button class="view-btn" onclick="changeView('list')">
-                        <i class="fas fa-list"></i>
-                    </button>
-                </div>
-            </div>
-            
             <div id="pdfsList" class="pdfs-grid">
                 <div class="loading">
                     <i class="fas fa-spinner fa-spin"></i>
@@ -190,7 +193,7 @@
         </section>
     </main>
 
-    <!-- Modal de Detalhes do Documento -->
+    <!-- Modal de Detalhes -->
     <div id="documentModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
@@ -211,6 +214,9 @@
                 <div class="modal-actions">
                     <button class="download-btn" id="modalDownload">
                         <i class="fas fa-download"></i> Baixar PDF
+                    </button>
+                    <button class="share-btn" id="modalShare" onclick="shareCurrentDocument()">
+                        <i class="fas fa-share-alt"></i> Compartilhar
                     </button>
                     <button class="delete-btn" id="modalDelete" style="display:none;">
                         <i class="fas fa-trash"></i> Excluir
