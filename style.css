@@ -496,3 +496,215 @@ footer {
     10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
     20%, 40%, 60%, 80% { transform: translateX(10px); }
 }
+/* Seção de Filtros */
+.filters-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.filters-container h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+}
+
+.filters-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 150px;
+}
+
+.filter-group.search-group {
+    flex: 2;
+    min-width: 250px;
+    position: relative;
+}
+
+.filter-group.search-group i {
+    position: absolute;
+    left: 12px;
+    top: 38px;
+    color: #999;
+}
+
+.filter-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.filter-group input,
+.filter-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.filter-group.search-group input {
+    padding-left: 35px;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+}
+
+.clear-filters-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.clear-filters-btn:hover {
+    background: #c0392b;
+    transform: scale(1.02);
+}
+
+.filter-stats {
+    margin-top: 15px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.filter-stats span {
+    font-weight: bold;
+    color: #3498db;
+}
+/* ===== NOVAS MELHORIAS ===== */
+
+/* Estatísticas e controles */
+.filter-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 15px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+}
+
+.stats-left {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.stats-left span {
+    font-weight: bold;
+    color: #3498db;
+}
+
+.stats-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.stats-right label {
+    font-size: 0.85rem;
+    color: #555;
+    margin: 0;
+}
+
+.stats-right select {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.export-btn {
+    background: var(--ifsp-green);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.3s;
+}
+
+.export-btn:hover {
+    background: var(--ifsp-light-green);
+    transform: scale(1.02);
+}
+
+/* Drag & Drop */
+.drag-drop-hint {
+    font-size: 0.8rem;
+    color: #999;
+    text-align: center;
+    margin-top: 8px;
+}
+
+.upload-container.drag-over {
+    border: 2px dashed var(--ifsp-green);
+    background: rgba(0, 100, 55, 0.05);
+}
+
+/* Botão Compartilhar */
+.share-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.share-btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+/* Modal actions layout */
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Responsividade para stats */
+@media (max-width: 768px) {
+    .filter-stats {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .stats-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .stats-right select {
+        flex: 1;
+    }
+}
